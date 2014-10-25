@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"math"
@@ -295,16 +296,41 @@ func (s *Sequence) Len() int {
 }
 
 func main() {
-	X, y := LoadFromFile("../nlp-programming/data/wiki-en-test.norm_pos")
-	h := NewHMM(1.0)
-	h.Fit(X, y)
-	SaveHMM(h, "model")
+    flag.Usage = func () {
+        flag.PrintDefaults()
+    }
+    fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+    var (
+        modelfile = fs.String("m", "model", "model file")
+        input = fs.String("i", "input", "input")
+        lambda = fs.Float64("l", 0.9, "smoothing parameter")
+    )
+    if os.Args[1] == "-h" {
+        fmt.Println("./hmm [train|test] OPTIONS")
+       os.Exit(1)
+    }
 
-	i := LoadHMM("model")
+    mode := os.Args[1]
+    fs.Parse(os.Args[2:])
+    fmt.Println("mode:", mode)
+    fmt.Println("modelfile:", *modelfile)
+    fmt.Println("input:", *input)
+
+    if mode == "train" {
+	X, y := LoadFromFile(*input)
+	h := NewHMM(*lambda)
+	h.Fit(X, y)
+	SaveHMM(h, *modelfile)
+    } else if mode == "test" {
+	X, y := LoadFromFile(*input)
+	h := LoadHMM(*modelfile)
 	var y_pred []string
-	fmt.Println(X[0])
-	fmt.Println(y[0])
-	y_pred = i.Predict(X[0])
-	fmt.Println(y_pred)
-	fmt.Println("")
+        for i := 0; i < len(X); i++{
+            fmt.Println(X[i])
+            fmt.Println(y[i])
+            y_pred = h.Predict(X[i])
+            fmt.Println(y_pred)
+            fmt.Println("")
+        }
+    }
 }
