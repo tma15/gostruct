@@ -312,9 +312,9 @@ func main() {
 
     mode := os.Args[1]
     fs.Parse(os.Args[2:])
-    fmt.Println("mode:", mode)
-    fmt.Println("modelfile:", *modelfile)
-    fmt.Println("input:", *input)
+//     fmt.Println("mode:", mode)
+//     fmt.Println("modelfile:", *modelfile)
+//     fmt.Println("input:", *input)
 
     if mode == "train" {
 	X, y := LoadTrainFile(*input)
@@ -326,7 +326,6 @@ func main() {
 	h := LoadHMM(*modelfile)
 	var y_pred []string
         for i := 0; i < len(X); i++{
-//             fmt.Println(X[i])
             y_pred = h.Predict(X[i])
             fmt.Println(strings.Join(y_pred, " "))
         }
