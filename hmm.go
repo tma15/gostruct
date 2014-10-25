@@ -317,20 +317,18 @@ func main() {
     fmt.Println("input:", *input)
 
     if mode == "train" {
-	X, y := LoadFromFile(*input)
+	X, y := LoadTrainFile(*input)
 	h := NewHMM(*lambda)
 	h.Fit(X, y)
 	SaveHMM(h, *modelfile)
     } else if mode == "test" {
-	X, y := LoadFromFile(*input)
+	X := LoadTestFile(*input)
 	h := LoadHMM(*modelfile)
 	var y_pred []string
         for i := 0; i < len(X); i++{
-            fmt.Println(X[i])
-            fmt.Println(y[i])
+//             fmt.Println(X[i])
             y_pred = h.Predict(X[i])
-            fmt.Println(y_pred)
-            fmt.Println("")
+            fmt.Println(strings.Join(y_pred, " "))
         }
     }
 }

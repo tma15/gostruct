@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func LoadFromFile(fname string) ([][]string, [][]string) {
+func LoadTrainFile(fname string) ([][]string, [][]string) {
 	fp, err := os.Open(fname)
 	if err != nil {
 		panic(err)
@@ -49,4 +49,32 @@ func LoadFromFile(fname string) ([][]string, [][]string) {
 	return X, y
 }
 
+func LoadTestFile(fname string) [][]string {
+	fp, err := os.Open(fname)
+	if err != nil {
+		panic(err)
+	}
+
+	reader := bufio.NewReaderSize(fp, 4096*64)
+	X := [][]string{}
+
+	var word string
+	var x_i []string
+	for {
+		line, _, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		sp := strings.Split(string(line), " ")
+		x_i = []string{}
+		for i := 0; i < len(sp); i++ {
+			word = sp[i]
+			x_i = append(x_i, word)
+		}
+                X = append(X, x_i)
+	}
+	return X
+}
 
