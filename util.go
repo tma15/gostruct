@@ -1,8 +1,8 @@
-package main
+package gostruct
 
 import (
 	"bufio"
-//         "fmt"
+	//         "fmt"
 	"io"
 	"os"
 	"strings"
@@ -40,11 +40,11 @@ func LoadTrainFile(fname string) ([][]string, [][]string) {
 			x_i = append(x_i, word)
 			y_i = append(y_i, pos)
 		}
-                X = append(X, x_i)
-                y = append(y, y_i)
-//                 fmt.Println(x_i)
-//                 fmt.Println(y_i)
-//                 fmt.Println("")
+		X = append(X, x_i)
+		y = append(y, y_i)
+		//                 fmt.Println(x_i)
+		//                 fmt.Println(y_i)
+		//                 fmt.Println("")
 	}
 	return X, y
 }
@@ -73,8 +73,7 @@ func LoadTestFile(fname string) [][]string {
 			word = sp[i]
 			x_i = append(x_i, word)
 		}
-                X = append(X, x_i)
+		X = append(X, x_i)
 	}
 	return X
 }
-
