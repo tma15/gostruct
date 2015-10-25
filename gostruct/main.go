@@ -13,14 +13,13 @@ func train(args []string) {
 	var (
 		modelfile = fs.String("m", "model", "model file")
 		input     = fs.String("i", "input", "input")
-		lambda    = fs.Float64("l", 0.9, "smoothing parameter")
 	)
 
 	fs.Parse(args)
 
-	X, y := gostruct.LoadTrainFile(*input)
-	h := gostruct.NewHMM(*lambda)
-	h.Fit(X, y)
+	x, y := gostruct.LoadTrainFile(*input)
+	h := gostruct.NewHMM()
+	h.Fit(&x, &y)
 	h.Save(*modelfile)
 }
 
@@ -36,7 +35,7 @@ func test(args []string) {
 	h := gostruct.LoadHMM(*modelfile)
 	var y_pred []string
 	for i := 0; i < len(X); i++ {
-		y_pred = h.Predict(X[i])
+		y_pred = h.Predict(&X[i])
 		fmt.Println(strings.Join(y_pred, " "))
 	}
 

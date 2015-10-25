@@ -6,7 +6,7 @@ import (
 )
 
 func TestSmallHMM(t *testing.T) {
-	hmm := NewHMM(0.001)
+	hmm := NewHMM()
 
 	x := [][]string{
 		[]string{
@@ -25,20 +25,20 @@ func TestSmallHMM(t *testing.T) {
 		},
 	}
 
-	hmm.Fit(x, y)
+	hmm.Fit(&x, &y)
 	num_w := 2
-	am := hmm.Forward(num_w, x[0])
+	am := hmm.Forward(num_w, &x[0])
 	tags := hmm.Backward(num_w, am)
 	fmt.Println(tags)
 }
 
 func TestHMM2(t *testing.T) {
-	hmm := NewHMM(0.001)
+	hmm := NewHMM()
 
 	x_train, y_train := LoadTrainFile("/home/makino/code/nlptutorial/data/wiki-en-train.norm_pos")
 
-	hmm.Fit(x_train, y_train)
-	hmm.Sav("model")
+	hmm.Fit(&x_train, &y_train)
+	hmm.Save("model")
 
 	hmm2 := LoadHMM("model")
 
@@ -49,8 +49,8 @@ func TestHMM2(t *testing.T) {
 	num_total := 0.
 	num_total2 := 0.
 	for i := 0; i < num_data; i++ {
-		predy := hmm.Predict(x[i])
-		predy2 := hmm2.Predict(x[i])
+		predy := hmm.Predict(&x[i])
+		predy2 := hmm2.Predict(&x[i])
 		fmt.Println(y[i])
 		fmt.Println(predy2)
 		fmt.Println()

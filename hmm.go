@@ -21,7 +21,7 @@ type HMM struct {
 	Transition    Matrix
 }
 
-func NewHMM(l float64) HMM {
+func NewHMM() HMM {
 	hmm := HMM{
 		XIndex:        NewIndex(),
 		YIndex:        NewIndex(),
@@ -35,13 +35,13 @@ func NewHMM(l float64) HMM {
 	return hmm
 }
 
-func (h *HMM) Fit(X, y [][]string) {
+func (h *HMM) Fit(x, y *[][]string) {
 	var xn, ym, yn string
 	var iym, iyn, ixn int
 
-	num_data := float64(len(X))
-	for i, _ := range X {
-		seq := Sequence{X[i], y[i]}
+	num_data := float64(len(*x))
+	for i := 0; i < len(*x); i++ {
+		seq := Sequence{(*x)[i], (*y)[i]}
 		for j := 0; j <= seq.Len(); j++ {
 			if j == 0 {
 				/* BOSと先頭の品詞 */
@@ -106,7 +106,7 @@ func (h *HMM) nl(val float64) float64 {
 	return -math.Log(val)
 }
 
-func (h *HMM) Forward(num_w int, x []string) Matrix {
+func (h *HMM) Forward(num_w int, x *[]string) Matrix {
 	ysize := len(h.YIndex.Ids)
 	be := NewMatrix()
 	am := NewMatrix()
@@ -117,9 +117,9 @@ func (h *HMM) Forward(num_w int, x []string) Matrix {
 	/* 初期化 */
 	var w int = -1
 	var has_w bool
-	has_w = h.XIndex.HasElem(x[0])
+	has_w = h.XIndex.HasElem((*x)[0])
 	if has_w {
-		w = h.XIndex.GetId(x[0])
+		w = h.XIndex.GetId((*x)[0])
 	}
 	for i, _ := range h.YIndex.Elems {
 		be[0][i] = 0.
@@ -134,9 +134,9 @@ func (h *HMM) Forward(num_w int, x []string) Matrix {
 
 	var hypo float64
 	for i := 0; i < num_w-1; i++ {
-		has_w = h.XIndex.HasElem(x[i+1])
+		has_w = h.XIndex.HasElem((*x)[i+1])
 		if has_w {
-			w = h.XIndex.GetId(x[i+1])
+			w = h.XIndex.GetId((*x)[i+1])
 		}
 		for c, _ := range h.YIndex.Elems {
 			for n, _ := range h.YIndex.Elems {
@@ -184,8 +184,8 @@ func (h *HMM) Backward(num_w int, am Matrix) []string {
 	return tags
 }
 
-func (h *HMM) Predict(x []string) []string {
-	num_w := len(x)
+func (h *HMM) Predict(x *[]string) []string {
+	num_w := len(*x)
 	bestEdge := h.Forward(num_w, x)
 	return h.Backward(num_w, bestEdge)
 }
