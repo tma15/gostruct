@@ -8,6 +8,40 @@ import (
 	"strings"
 )
 
+func ReadCoNLLFormat(filename string) ([][][]string, [][]string) {
+	fp, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
+	scanner := bufio.NewScanner(fp)
+
+	x := make([][][]string, 0, 1000)
+	y := make([][]string, 0, 1000)
+	var x_ [][]string = make([][]string, 0, 100)
+	var y_ []string = make([]string, 0, 100)
+	//         var thr int = 100
+	//         var i int = 0
+	for scanner.Scan() {
+		text := scanner.Text()
+		sp := strings.Split(text, " ")
+		if len(sp) == 1 {
+			x = append(x, x_)
+			y = append(y, y_)
+			x_ = make([][]string, 0, 100)
+			y_ = make([]string, 0, 100)
+			continue
+		}
+		x_ = append(x_, []string{sp[0], sp[1]})
+		y_ = append(y_, sp[2])
+		//                 if i > thr {
+		//                         break
+		//                 }
+		//                 i++
+	}
+	return x, y
+}
+
 func LoadTrainFile(fname string) ([][]string, [][]string) {
 	fp, err := os.Open(fname)
 	if err != nil {

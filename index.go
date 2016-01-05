@@ -43,11 +43,14 @@ func (this *Index) HasElem(elem string) bool {
 }
 
 func (this *Index) GetId(elem string) int {
-	//         return this.Ids[elem]
 	id, ok := this.Ids[elem]
 	if !ok {
 		log.Println(fmt.Sprintf("%s doesn't exist", elem))
 		os.Exit(1)
 	}
 	return id
+}
+
+func (this *Index) Size() int {
+	return len(this.Elems)
 }
