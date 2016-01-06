@@ -1,61 +1,36 @@
-gostruct
-==
-A library of supervised structured learning
+# gostruct
+A library of supervised structured output learning such as NP chunking
 
-Usage
-==
+## Supported Algorithms
+- Structured Perceptron
+
+## Data Format
+Data format of this program is CoNLL 2000 format.
+
+see: [Chunking](http://www.cnts.ua.ac.be/conll2000/chunking/)
+
+## Training
 ```
-func main() {
-  hmm := NewHMM()
-
-  x := [][]string{
-          []string{
-                  "a", "b",
-          },
-          []string{
-                  "a", "a",
-          },
-  }
-  y := [][]string{
-          []string{
-                  "p1", "p2",
-          },
-          []string{
-                  "p1", "p1",
-          },
-  }
-
-  hmm.Fit(&x, &y)
-
-  test := []string{
-      "a", "b",
-  }
-  pred := hmm.Predict(&test)
-}
+wget http://www.cnts.ua.ac.be/conll2000/chunking/train.txt.gz
+zcat train.txt.gz > train.txt
+./gostruct train -a hmmperc -m model train.txt
 ```
 
-Example
-==
-This example uses POS tagging in  [nlptutorial](https://github.com/neubig/nlptutorial).
-
+## Testing
 ```
-$./gostruct train -i ~/code/nlptutorial/data/wiki-en-train.norm_pos
-$./gostruct test -i ~/code/nlptutorial/data/wiki-en-test.norm -m model > my_answer.pos
-$~/code/nlptutorial/script/gradepos.pl ~/code/nlptutorial/data/wiki-en-test.pos my_answer.pos3
+wget http://www.cnts.ua.ac.be/conll2000/chunking/test.txt.gz
+zcat train.txt.gz > test.txt
+./gostruct test -a hmmperc -m model ../hmm_perc/test.txt
 ```
 
---
-Format
---
+## References
+- Michael Collins, "Discriminative Training Methods for Hidden Markov Models:
+Theory and Experiments with Perceptron Algorithms",  EMNLP, 2002.
 
-Training data
----
-```
-<word>_<POS>  <word>_<POS> ...
-```
+## License
+see `LICENSE.txt`
 
-Test data
----
-```
-<word> <word> ...
-```
+## TODO
+- Benchmark test
+- Refine README
+- Implement other online learning algorithms
