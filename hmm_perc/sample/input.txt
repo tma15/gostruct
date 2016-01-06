@@ -1,0 +1,2 @@
+the	DT	B-NP
+current	JJ	I-NP
