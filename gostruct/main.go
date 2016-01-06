@@ -12,9 +12,10 @@ import (
 func train(args []string) {
 	fs := flag.NewFlagSet("train", flag.ExitOnError)
 	var (
-		model_file = fs.String("m", "model", "model file")
-		input      = fs.String("i", "input", "input")
-		algorithm  = fs.String("a", "algorithm", "algorithm")
+		model_file    = fs.String("m", "model", "model file")
+		input         = fs.String("i", "input", "input")
+		algorithm     = fs.String("a", "algorithm", "algorithm")
+		template_file = fs.String("t", "../hmm_perc/sample/example.tmp", "template file")
 	)
 
 	fs.Parse(args)
@@ -26,11 +27,9 @@ func train(args []string) {
 		h.Fit(&x, &y)
 		h.Save(*model_file)
 	case "hmmperc":
-		template_file := "/home/makino/go/src/github.com/tma15/gostruct/hmm_perc/example.tmp"
-
 		feature_index := hmm_perc.NewFeatureIndex()
 		for _, train_file := range fs.Args() {
-			feature_index.Open(template_file, train_file)
+			feature_index.Open(*template_file, train_file)
 		}
 
 		// train
@@ -54,9 +53,10 @@ func train(args []string) {
 func test(args []string) {
 	fs := flag.NewFlagSet("test", flag.ExitOnError)
 	var (
-		model_file = fs.String("m", "model", "model file")
-		input      = fs.String("i", "input", "input")
-		algorithm  = fs.String("a", "algorithm", "algorithm")
+		model_file    = fs.String("m", "model", "model file")
+		template_file = fs.String("t", "../hmm_perc/sample/example.tmp", "template file")
+		input         = fs.String("i", "input", "input")
+		algorithm     = fs.String("a", "algorithm", "algorithm")
 	)
 	fs.Parse(args)
 
@@ -70,9 +70,7 @@ func test(args []string) {
 			fmt.Println(strings.Join(y_pred, " "))
 		}
 	case "hmmperc":
-		template_file := "/home/makino/go/src/github.com/tma15/gostruct/hmm_perc/example.tmp"
-
-		fi := hmm_perc.FeatureIndexFromFile(*model_file, template_file)
+		fi := hmm_perc.FeatureIndexFromFile(*model_file, *template_file)
 		fmt.Println(len(fi.Output.Ids))
 
 		tagger := hmm_perc.NewTagger()
