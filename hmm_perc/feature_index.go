@@ -103,9 +103,10 @@ func NewFeatureIndex() FeatureIndex {
 		NodeFeature: gostruct.NewIndex(),
 		EdgeFeature: gostruct.NewIndex(),
 		Output:      gostruct.NewIndex(),
-		IntRegex:    regexp.MustCompile(`[0-9]+`),
-		Unigrams:    make([]Macro, 0, 10),
-		Bigrams:     make([]Macro, 0, 10),
+		//                 IntRegex:    regexp.MustCompile(`[0-9]+`),
+		IntRegex: regexp.MustCompile(`-?[0-9]+`),
+		Unigrams: make([]Macro, 0, 10),
+		Bigrams:  make([]Macro, 0, 10),
 	}
 	return this
 }
@@ -205,12 +206,14 @@ func (this *FeatureIndex) Fire(curr int, x [][]string, Ngrams []Macro) []int {
 		_features := make([]string, 0, macro.N)
 		for i := 0; i < macro.N; i++ {
 			if curr+macro.Pos[i] >= len(x) {
-				continue
+				_features = append(_features, "EOS")
+				//                                 continue
+			} else if curr+macro.Pos[i] < 0 {
+				_features = append(_features, "BOS")
+				//                                 continue
+			} else {
+				_features = append(_features, x[curr+macro.Pos[i]][macro.Col[i]])
 			}
-			if curr+macro.Pos[i] < 0 {
-				continue
-			}
-			_features = append(_features, x[curr+macro.Pos[i]][macro.Col[i]])
 		}
 		feature := fmt.Sprintf("%s:%s", macro.Prefix, strings.Join(_features, "/"))
 		if string(macro.Prefix[0]) == "U" {
@@ -267,7 +270,6 @@ func (this *FeatureIndex) CalcPathScore(path *Path) {
 func (this *FeatureIndex) BuildFeatures(tagger *Tagger) {
 	nodes := make([][]Node, 0, 10)
 	x := tagger.X
-	//         tagger.LabelIndex  =this.Output
 
 	// 単語ごとに素性idのリストへ変換し、nodeへ付与
 	for i := 0; i < len(x); i++ {
@@ -284,7 +286,7 @@ func (this *FeatureIndex) BuildFeatures(tagger *Tagger) {
 		}
 	}
 
-	//         node間にエッジ (path) を張る
+	// node間にエッジ (path) を張る
 	for i := 1; i < len(x); i++ {
 		fs := this.Fire(i, x, this.Bigrams)
 		for j, _ := range this.Output.Elems {
