@@ -1,6 +1,11 @@
 # gostruct
 A library of supervised structured output learning such as NP chunking
 
+To use this program, run the folowing command:
+```
+go get github.com/tma15/gostruct
+```
+
 ## Supported Algorithms
 - Structured Perceptron
 
