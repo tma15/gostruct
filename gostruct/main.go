@@ -77,19 +77,20 @@ func test(args []string) {
 		tagger.SetFeatureIndex(fi)
 
 		// test
+		var token_match int = 0
+		var token_total int = 0
+		var sent_match int = 0
+		var sent_total int = 0
+
 		for _, test_file := range fs.Args() {
 			x, y := gostruct.ReadCoNLLFormat(test_file)
 			n := len(x)
-			var token_match int = 0
-			var token_total int = 0
-			var sent_match int = 0
-			var sent_total int = 0
 			for i := 0; i < n; i++ {
 				pred := tagger.Predict(x[i])
-				fmt.Println(x[i])
-				fmt.Println("true", y[i])
-				fmt.Println("pred", pred)
-				fmt.Println()
+				//                                 fmt.Println(x[i])
+				//                                 fmt.Println("true", y[i])
+				//                                 fmt.Println("pred", pred)
+				//                                 fmt.Println()
 
 				for j := 0; j < len(y[i]); j++ {
 					if y[i][j] == pred[j] {
@@ -107,10 +108,13 @@ func test(args []string) {
 				fmt.Println(fmt.Sprintf("token:%f (%d/%d)",
 					float64(token_match)/float64(token_total), token_match, token_total))
 
-				fmt.Println(fmt.Sprintf("sent:%f (%d/%d)",
-					float64(sent_match)/float64(sent_total), sent_match, sent_total))
+				//                                 fmt.Println(fmt.Sprintf("sent:%f (%d/%d)",
+				//                                         float64(sent_match)/float64(sent_total), sent_match, sent_total))
 			}
 		}
+		fmt.Println(fmt.Sprintf("token:%f (%d/%d)",
+			float64(token_match)/float64(token_total), token_match, token_total))
+
 	}
 
 }
