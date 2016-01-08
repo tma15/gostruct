@@ -55,8 +55,9 @@ func test(args []string) {
 	var (
 		model_file    = fs.String("m", "model", "model file")
 		template_file = fs.String("t", "../hmm_perc/sample/example.tmp", "template file")
-		input         = fs.String("i", "input", "input")
-		algorithm     = fs.String("a", "algorithm", "algorithm")
+		input         = fs.String("i", "", "input")
+		algorithm     = fs.String("a", "", "algorithm")
+		verbose       = fs.Bool("v", false, "verbose mode")
 	)
 	fs.Parse(args)
 
@@ -87,10 +88,6 @@ func test(args []string) {
 			n := len(x)
 			for i := 0; i < n; i++ {
 				pred := tagger.Predict(x[i])
-				//                                 fmt.Println(x[i])
-				//                                 fmt.Println("true", y[i])
-				//                                 fmt.Println("pred", pred)
-				//                                 fmt.Println()
 
 				for j := 0; j < len(y[i]); j++ {
 					if y[i][j] == pred[j] {
@@ -105,14 +102,19 @@ func test(args []string) {
 
 				sent_total++
 
-				fmt.Println(fmt.Sprintf("token:%f (%d/%d)",
-					float64(token_match)/float64(token_total), token_match, token_total))
+				if *verbose {
+					for t := 0; t < len(x[i]); t++ {
+						fmt.Println(fmt.Sprintf("%s\t%s\t%s", x[i][t][0], y[i][t], pred[t]))
+					}
+				}
 
+				//                                 fmt.Println(fmt.Sprintf("accuracy:%f (%d/%d)",
+				//                                         float64(token_match)/float64(token_total), token_match, token_total))
 				//                                 fmt.Println(fmt.Sprintf("sent:%f (%d/%d)",
 				//                                         float64(sent_match)/float64(sent_total), sent_match, sent_total))
 			}
 		}
-		fmt.Println(fmt.Sprintf("token:%f (%d/%d)",
+		fmt.Println(fmt.Sprintf("accuracy:%f (%d/%d)",
 			float64(token_match)/float64(token_total), token_match, token_total))
 
 	}
