@@ -25,7 +25,7 @@ zcat train.txt.gz > train.txt
 ```
 wget http://www.cnts.ua.ac.be/conll2000/chunking/test.txt.gz
 zcat train.txt.gz > test.txt
-./gostruct test -a hmmperc -m model ../hmm_perc/test.txt
+./gostruct test -a hmmperc -m model test.txt
 ```
 
 ## References
