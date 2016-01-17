@@ -16,16 +16,18 @@ see: [Chunking](http://www.cnts.ua.ac.be/conll2000/chunking/)
 
 ## Training
 ```
+cd $GOPATH/src/github.com/tma15/gostruct
 wget http://www.cnts.ua.ac.be/conll2000/chunking/train.txt.gz
 zcat train.txt.gz > train.txt
-./gostruct train -a hmmperc -m model train.txt
+./gostruct train -t ./hmm_perc/sample/example.tmp -a hmmperc -m model train.txt
 ```
 
 ## Testing
 ```
+cd $GOPATH/src/github.com/tma15/gostruct
 wget http://www.cnts.ua.ac.be/conll2000/chunking/test.txt.gz
 zcat train.txt.gz > test.txt
-./gostruct test -a hmmperc -m model test.txt
+./gostruct test -v -t ./hmm_perc/sample/example.tmp -a hmmperc -m model test.txt
 ```
 
 ## References
