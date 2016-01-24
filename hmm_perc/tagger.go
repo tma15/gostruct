@@ -43,9 +43,7 @@ func (this *Tagger) Fit(x *[][]string, y *[]string) {
 	this.feature_index.BuildFeatures(this)
 	this.Viterbi()
 	pred := this.BackTrack()
-	if !IsTheSame(*y, pred) {
-		this.Update(*y, pred)
-	}
+	this.Update(*y, pred)
 }
 
 func (this *Tagger) Predict(x [][]string) []string {
@@ -114,48 +112,69 @@ func (this *Tagger) BackTrack() []string {
 }
 
 func (this *Tagger) Update(y, pred []string) {
-	var sign float64
-	sign = 1.
 	for i := 0; i < len(y); i++ {
 		j := this.feature_index.Output.GetId(y[i])
-		fs := this.Nodes[i][j].Fs
-		for _, fid := range fs {
-			this.feature_index.NodeWeight[j][fid] += 1.
-		}
-
-		lpath := this.Nodes[i][j].LPath
-		for _, p := range lpath {
-			y1 := p.LNode.Y
-			y2 := p.RNode.Y
-			if y2 == this.feature_index.Output.GetId(y[i]) &&
-				y1 == this.feature_index.Output.GetId(y[i-1]) {
-				for _, fid := range p.Fs {
-					offset1 := y1*this.feature_index.Output.Size() + y2
-					this.feature_index.EdgeWeight[offset1][fid] += 1.
-				}
-				break
-			}
-		}
-
 		k := this.feature_index.Output.GetId(pred[i])
-		fs = this.Nodes[i][k].Fs
-		for _, fid := range fs {
-			this.feature_index.NodeWeight[k][fid] -= 1
-		}
-		lpath = this.Nodes[i][k].LPath
-		for _, p := range lpath {
-			y1 := p.LNode.Y
-			y2 := p.RNode.Y
-			if y2 == this.feature_index.Output.GetId(pred[i]) &&
-				y1 == this.feature_index.Output.GetId(pred[i-1]) {
-				for _, fid := range p.Fs {
-					offset1 := y1*this.feature_index.Output.Size() + y2
-					this.feature_index.EdgeWeight[offset1][fid] -= sign
-				}
-				break
+		if y[i] != pred[i] {
+			fs := this.Nodes[i][j].Fs
+			for _, fid := range fs {
+				this.feature_index.NodeWeight[j][fid] += 1.
+			}
+			fs = this.Nodes[i][k].Fs
+			for _, fid := range fs {
+				this.feature_index.NodeWeight[k][fid] -= 1.
 			}
 		}
+
+		if i > 0 {
+			p2 := this.feature_index.Output.GetId(pred[i])
+			p1 := this.feature_index.Output.GetId(pred[i-1])
+			t2 := this.feature_index.Output.GetId(y[i])
+			t1 := this.feature_index.Output.GetId(y[i-1])
+
+			if y[i-1] != pred[i-1] || y[i] != pred[i] {
+				lpath := this.Nodes[i][j].LPath
+				for _, p := range lpath {
+					y1 := p.LNode.Y /* previous */
+					y2 := p.RNode.Y /* current */
+					offset := y1*this.feature_index.Output.Size() + y2
+					if y2 == t2 && y1 == t1 {
+						for _, fid := range p.Fs {
+							this.feature_index.EdgeWeight[offset][fid] += 1.
+						}
+					}
+					if y2 == p2 && y1 == p1 {
+						for _, fid := range p.Fs {
+							this.feature_index.EdgeWeight[offset][fid] -= 1.
+						}
+					}
+				}
+				lpath = this.Nodes[i][k].LPath
+				for _, p := range lpath {
+					y1 := p.LNode.Y /* previous */
+					y2 := p.RNode.Y /* current */
+					offset := y1*this.feature_index.Output.Size() + y2
+					if y2 == p2 && y1 == p1 {
+						for _, fid := range p.Fs {
+							this.feature_index.EdgeWeight[offset][fid] -= 1.
+						}
+					}
+				}
+			}
+		}
+
 	}
+
+	//         for i, y1 := range this.feature_index.Output.Elems {
+	//                 for j, y2 := range this.feature_index.Output.Elems {
+	//                         offset := j*this.feature_index.Output.Size() + i
+	//                         if this.feature_index.EdgeWeight[offset][0] != 0 {
+	//                                 fmt.Println("B", y2, y1, this.feature_index.EdgeWeight[offset][0])
+	//                         }
+	//                 }
+	//         }
+	//         fmt.Println("--")
+
 }
 
 func (this *Tagger) Save(model_file string) {
