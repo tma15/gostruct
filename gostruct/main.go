@@ -39,12 +39,53 @@ func train(args []string) {
 		for _, train_file := range fs.Args() {
 			x, y := gostruct.ReadCoNLLFormat(train_file)
 			n := len(x)
-			fmt.Println(n)
 			for i := 0; i < n; i++ {
 				tagger.Fit(&x[i], &y[i])
 			}
 		}
 		tagger.Save(*model_file)
+
+		// closed test
+		//                 var token_match int = 0
+		//                 var token_total int = 0
+		//                 var sent_match int = 0
+		//                 var sent_total int = 0
+
+		//                 fi := hmm_perc.FeatureIndexFromFile(*model_file, *template_file)
+
+		//                 tagger2 := hmm_perc.NewTagger()
+		//                 tagger2.SetFeatureIndex(fi)
+
+		//                 for _, train_file := range fs.Args() {
+		//                         x, y := gostruct.ReadCoNLLFormat(train_file)
+		//                         n := len(x)
+		//                         for i := 0; i < n; i++ {
+		//                                 pred := tagger.Predict(x[i])
+		//                                 pred2 := tagger.Predict(x[i])
+
+		//                                 for j := 0; j < len(y[i]); j++ {
+		//                                         y_true := y[i][j]
+		//                                         y_pred := pred[j]
+		//                                         if y_true == y_pred {
+		//                                                 token_match++
+		//                                         }
+		//                                         token_total++
+		//                                 }
+
+		//                                 if hmm_perc.IsTheSame(y[i], pred) {
+		//                                         sent_match++
+		//                                 }
+		//                                 if !hmm_perc.IsTheSame(pred, pred2) {
+		//                                         fmt.Println("pred1", pred)
+		//                                         fmt.Println("pred2", pred2)
+		//                                         fmt.Println("==")
+		//                                 }
+
+		//                                 sent_total++
+		//                         }
+		//                 }
+		//                 fmt.Println(fmt.Sprintf("accuracy:%f (%d/%d)",
+		//                         float64(token_match)/float64(token_total), token_match, token_total))
 
 	}
 
