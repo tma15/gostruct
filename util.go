@@ -20,8 +20,6 @@ func ReadCoNLLFormat(filename string) ([][][]string, [][]string) {
 	y := make([][]string, 0, 1000)
 	var x_ [][]string = make([][]string, 0, 100)
 	var y_ []string = make([]string, 0, 100)
-	//         var thr int = 100
-	//         var i int = 0
 	for scanner.Scan() {
 		text := scanner.Text()
 		sp := strings.Split(text, " ")
@@ -32,12 +30,14 @@ func ReadCoNLLFormat(filename string) ([][][]string, [][]string) {
 			y_ = make([]string, 0, 100)
 			continue
 		}
-		x_ = append(x_, []string{sp[0], sp[1]})
-		y_ = append(y_, sp[2])
-		//                 if i > thr {
-		//                         break
-		//                 }
-		//                 i++
+		x_i := make([]string, 0, len(sp))
+		for i := 0; i < len(sp)-1; i++ {
+			x_i = append(x_i, sp[i])
+			//                         x_ = append(x_, []string{sp[0], sp[1]})
+		}
+		x_ = append(x_, x_i)
+		//                 x_ = append(x_, []string{sp[0], sp[1]})
+		y_ = append(y_, sp[len(sp)-1])
 	}
 	return x, y
 }
