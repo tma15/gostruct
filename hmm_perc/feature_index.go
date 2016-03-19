@@ -13,23 +13,23 @@ import (
 type FeatureIndex struct {
 	NodeFeature gostruct.Index
 	NodeWeight  gostruct.Matrix
-	EdgeFeature gostruct.Index
-	EdgeWeight  gostruct.Matrix
-	Output      gostruct.Index
-	Unigrams    []Macro /* Macro defined in template file */
-	Bigrams     []Macro /* Macro defined in tempalte file */
-	IntRegex    *regexp.Regexp
-	Templates   string
+	//         EdgeFeature gostruct.Index
+	EdgeWeight gostruct.Matrix
+	Output     gostruct.Index
+	Unigrams   []Macro /* Macro defined in template file */
+	Bigrams    []Macro /* Macro defined in tempalte file */
+	IntRegex   *regexp.Regexp
+	Templates  string
 }
 
 func NewFeatureIndex() FeatureIndex {
 	this := FeatureIndex{
 		NodeFeature: gostruct.NewIndex(),
-		EdgeFeature: gostruct.NewIndex(),
-		Output:      gostruct.NewIndex(),
-		IntRegex:    regexp.MustCompile(`-?[0-9]+`),
-		Unigrams:    make([]Macro, 0, 10),
-		Bigrams:     make([]Macro, 0, 10),
+		//                 EdgeFeature: gostruct.NewIndex(),
+		Output:   gostruct.NewIndex(),
+		IntRegex: regexp.MustCompile(`-?[0-9]+`),
+		Unigrams: make([]Macro, 0, 10),
+		Bigrams:  make([]Macro, 0, 10),
 	}
 	return this
 }
@@ -139,8 +139,8 @@ func (this *FeatureIndex) Fire(curr int, x [][]string, Ngrams []Macro) []int {
 		feature := fmt.Sprintf("%s:%s", macro.Prefix, strings.Join(_features, "/"))
 		if string(macro.Prefix[0]) == "U" {
 			id_f = this.NodeFeature.GetIdAndAddElemIfNotExists(feature)
-		} else if string(macro.Prefix[0]) == "B" {
-			id_f = this.EdgeFeature.GetIdAndAddElemIfNotExists(feature)
+			//                 } else if string(macro.Prefix[0]) == "B" {
+			//                         id_f = this.EdgeFeature.GetIdAndAddElemIfNotExists(feature)
 		}
 		fs = append(fs, id_f)
 	}
@@ -159,6 +159,9 @@ func (this *FeatureIndex) openTagSet(train_file string) {
 		//                 sp := strings.Split(text, "\t")
 		sp := strings.Split(text, " ") /* conull format */
 		output := sp[len(sp)-1]
+		if output == "" {
+			continue
+		}
 		this.Output.GetIdAndAddElemIfNotExists(output)
 	}
 	if err := scanner.Err(); err != nil {
@@ -180,11 +183,13 @@ func (this *FeatureIndex) CalcPathScore(path *Path) {
 	y1 := path.LNode.Y
 	y2 := path.RNode.Y
 	s := 0.
-	for _, fid := range path.Fs {
-		offset := y1*this.Output.Size() + y2
-		this.EdgeWeight.Resize(offset, fid)
-		s += this.EdgeWeight[offset][fid]
-	}
+	//         for _, fid := range path.Fs {
+	//                 offset := y1*this.Output.Size() + y2
+	//                 this.EdgeWeight.Resize(offset, fid)
+	//                 s += this.EdgeWeight[offset][fid]
+	//         }
+	this.EdgeWeight.Resize(y1, y2)
+	s += this.EdgeWeight[y1][y2]
 	path.Score = s
 }
 
@@ -209,13 +214,11 @@ func (this *FeatureIndex) BuildFeatures(tagger *Tagger) {
 
 	// node間にエッジ (path) を張る
 	for i := 1; i < len(x); i++ {
-		fs := this.Fire(i, x, this.Bigrams)
 		for j, _ := range this.Output.Elems {
 			for k, _ := range this.Output.Elems {
 				path := Path{
 					RNode: &nodes[i][k],
 					LNode: &nodes[i-1][j],
-					Fs:    fs,
 				}
 				this.CalcPathScore(&path)
 				path.Add(&nodes[i-1][j], &nodes[i][k])
@@ -254,15 +257,21 @@ func (this *FeatureIndex) Save(model_file string) {
 	}
 
 	/* bigram features */
-	writer.WriteString(fmt.Sprintf("%d\n", len(this.EdgeFeature.Ids)))
-	for _, ft := range this.EdgeFeature.Elems {
-		writer.WriteString(fmt.Sprintf("%s\n", ft))
-	}
+	//         writer.WriteString(fmt.Sprintf("%d\n", len(this.EdgeFeature.Ids)))
+	//         for _, ft := range this.EdgeFeature.Elems {
+	//                 writer.WriteString(fmt.Sprintf("%s\n", ft))
+	//         }
+
+	/* bigram weight */
 	writer.WriteString(fmt.Sprintf("%d\n", len(this.EdgeWeight)))
-	for y, _ := range this.EdgeWeight {
-		writer.WriteString(fmt.Sprintf("%d\n", len(this.EdgeWeight[y])))
-		for _, weight := range this.EdgeWeight[y] {
+	for y1, _ := range this.EdgeWeight {
+		writer.WriteString(fmt.Sprintf("%d\n", len(this.EdgeWeight[y1])))
+		//                 y1_ := this.Output.Elems[y1]
+		//                 writer.WriteString(fmt.Sprintf("%d #%s\n", len(this.EdgeWeight[y1]), y1_))
+		for _, weight := range this.EdgeWeight[y1] {
+			//                         y2_ := this.Output.Elems[y2]
 			writer.WriteString(fmt.Sprintf("%f\n", weight))
+			//                         writer.WriteString(fmt.Sprintf("%f #%s\n", weight, y2_))
 		}
 	}
 	writer.Flush()
@@ -340,21 +349,21 @@ func LoadFeatureIndex(model_file string) FeatureIndex {
 	}
 
 	/* read size of bigram features */
-	line, _, err = reader.ReadLine()
-	size_bigrams, err := strconv.Atoi(string(line))
-	if err != nil {
-		panic(err)
-	}
+	//         line, _, err = reader.ReadLine()
+	//         size_bigrams, err := strconv.Atoi(string(line))
+	//         if err != nil {
+	//                 panic(err)
+	//         }
 
 	/* read bigram features */
-	bigrams := gostruct.NewIndex()
-	for i := 0; i < size_bigrams; i++ {
-		line, _, err = reader.ReadLine()
-		if err != nil {
-			panic(err)
-		}
-		bigrams.GetIdAndAddElemIfNotExists(string(line))
-	}
+	//         bigrams := gostruct.NewIndex()
+	//         for i := 0; i < size_bigrams; i++ {
+	//                 line, _, err = reader.ReadLine()
+	//                 if err != nil {
+	//                         panic(err)
+	//                 }
+	//                 bigrams.GetIdAndAddElemIfNotExists(string(line))
+	//         }
 
 	bigram_weight := gostruct.NewMatrix()
 	line, _, err = reader.ReadLine()
@@ -385,10 +394,10 @@ func LoadFeatureIndex(model_file string) FeatureIndex {
 
 	fi := FeatureIndex{
 		NodeFeature: unigrams,
-		EdgeFeature: bigrams,
-		NodeWeight:  unigram_weight,
-		EdgeWeight:  bigram_weight,
-		Output:      output,
+		//                 EdgeFeature: bigrams,
+		NodeWeight: unigram_weight,
+		EdgeWeight: bigram_weight,
+		Output:     output,
 	}
 	return fi
 }

@@ -1,6 +1,7 @@
 package hmm_perc
 
 import (
+	"container/heap"
 	"fmt"
 	"os"
 )
@@ -8,6 +9,7 @@ import (
 type Tagger struct {
 	X     [][]string
 	Nodes [][]Node
+	EOS   Node
 
 	feature_index FeatureIndex
 }
@@ -96,14 +98,15 @@ func (this *Tagger) BackTrack() []string {
 	pred := make([]string, len(this.X), len(this.X))
 	var n *Node = bestnode
 	pred[len(this.X)-1] = this.feature_index.Output.Elems[n.Y]
-	//         fmt.Println(len(x)-1, "best", this.Output.Elems[n.Y], n.BestScore)
+	fmt.Println(len(this.X)-1, "best", this.feature_index.Output.Elems[n.Y],
+		n.BestScore, n.Prev)
 	i := len(this.X) - 2
 	for {
 		if i < 0 {
 			break
 		}
 		n = n.Prev
-		//                 fmt.Println(i, "best", this.Output.Elems[n.Y], n.BestScore)
+		fmt.Println(i, "best", this.feature_index.Output.Elems[n.Y], n.BestScore, n.Prev)
 		//                 pred[i] = this.LabelIndex.Elems[n.Y]
 		pred[i] = this.feature_index.Output.Elems[n.Y]
 		i--
@@ -112,69 +115,86 @@ func (this *Tagger) BackTrack() []string {
 }
 
 func (this *Tagger) Update(y, pred []string) {
-	for i := 0; i < len(y); i++ {
-		j := this.feature_index.Output.GetId(y[i])
-		k := this.feature_index.Output.GetId(pred[i])
-		if y[i] != pred[i] {
+	if !IsTheSame(y, pred) {
+		for i := 0; i < len(y); i++ {
+			j := this.feature_index.Output.GetId(y[i])
+			k := this.feature_index.Output.GetId(pred[i])
+			/* true */
 			fs := this.Nodes[i][j].Fs
 			for _, fid := range fs {
 				this.feature_index.NodeWeight[j][fid] += 1.
 			}
+			/* predict */
 			fs = this.Nodes[i][k].Fs
 			for _, fid := range fs {
 				this.feature_index.NodeWeight[k][fid] -= 1.
 			}
+
+			if i > 0 {
+				p2 := this.feature_index.Output.GetId(pred[i])
+				p1 := this.feature_index.Output.GetId(pred[i-1])
+				t2 := this.feature_index.Output.GetId(y[i])
+				t1 := this.feature_index.Output.GetId(y[i-1])
+				this.feature_index.EdgeWeight[t1][t2] += 1.
+				this.feature_index.EdgeWeight[p1][p2] -= 1.
+			}
+
 		}
+	}
 
-		if i > 0 {
-			p2 := this.feature_index.Output.GetId(pred[i])
-			p1 := this.feature_index.Output.GetId(pred[i-1])
-			t2 := this.feature_index.Output.GetId(y[i])
-			t1 := this.feature_index.Output.GetId(y[i-1])
+}
 
-			if y[i-1] != pred[i-1] || y[i] != pred[i] {
-				lpath := this.Nodes[i][j].LPath
-				for _, p := range lpath {
-					y1 := p.LNode.Y /* previous */
-					y2 := p.RNode.Y /* current */
-					offset := y1*this.feature_index.Output.Size() + y2
-					if y2 == t2 && y1 == t1 {
-						for _, fid := range p.Fs {
-							this.feature_index.EdgeWeight[offset][fid] += 1.
-						}
-					}
-					if y2 == p2 && y1 == p1 {
-						for _, fid := range p.Fs {
-							this.feature_index.EdgeWeight[offset][fid] -= 1.
-						}
-					}
-				}
-				lpath = this.Nodes[i][k].LPath
-				for _, p := range lpath {
-					y1 := p.LNode.Y /* previous */
-					y2 := p.RNode.Y /* current */
-					offset := y1*this.feature_index.Output.Size() + y2
-					if y2 == p2 && y1 == p1 {
-						for _, fid := range p.Fs {
-							this.feature_index.EdgeWeight[offset][fid] -= 1.
-						}
-					}
-				}
+func (this *Tagger) BackwardAstar(N int, nodes [][]*Node, eos *Node) [][]int {
+	pqueue := make(PriorityQueue, 0, 10)
+	heap.Init(&pqueue)
+
+	eos.PathTotalScore = 0.
+	heap.Push(&pqueue, eos)
+
+	var result []*Node = make([]*Node, N, N)
+	var n int = 0
+
+	for {
+		if pqueue.IsEmpty() {
+			break
+		}
+		var node *Node = pqueue.Pop().(*Node)
+		//         fmt.Println("POP", node.X, node.Y)
+
+		if node.X == 0 { // is bos
+			result[n] = node
+			n += 1
+		} else {
+			for _, p := range node.LPath {
+				prev := *p.LNode // copy
+				prev.GoalScore = node.GoalScore + p.Score
+				prev.PathTotalScore = prev.BestScore + prev.GoalScore
+				prev.Next = node
+				//                 fmt.Println("PUSH", prev.X, prev.Y, prev.Score)
+				heap.Push(&pqueue, &prev)
 			}
 		}
 
+		if n >= N {
+			break
+		}
 	}
 
-	//         for i, y1 := range this.feature_index.Output.Elems {
-	//                 for j, y2 := range this.feature_index.Output.Elems {
-	//                         offset := j*this.feature_index.Output.Size() + i
-	//                         if this.feature_index.EdgeWeight[offset][0] != 0 {
-	//                                 fmt.Println("B", y2, y1, this.feature_index.EdgeWeight[offset][0])
-	//                         }
-	//                 }
-	//         }
-	//         fmt.Println("--")
+	var results [][]int = make([][]int, 0, N)
+	for i, n := range result {
+		var result []int = make([]int, 0, len(nodes))
+		for {
+			n = n.Next
+			if n.X == eos.X {
+				break
+			}
 
+			fmt.Println(fmt.Sprintf("%d-best: %d", i+1, n.Y))
+			result = append(result, n.Y)
+		}
+		fmt.Println("")
+	}
+	return results
 }
 
 func (this *Tagger) Save(model_file string) {

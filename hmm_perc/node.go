@@ -7,13 +7,23 @@ import (
 type Node struct {
 	Obs   string  /* 観測した文字列 */
 	Score float64 /* このノードに付与された重み */
-	X     int     /* 観測した系列中での位置  */
-	Y     int     /* 隠れ状態のid */
-	Fs    []int   /* このノードが持つ素性のリスト */
+
+	X int /* 観測した系列中での位置  */
+	Y int /* 隠れ状態のid */
+
+	Fs []int /* このノードが持つ素性のリスト */
+
 	LPath []*Path /* ラティス上でこのノードの左側に付いているエッジ */
-	//         RPath     []*Path /* ラティス上でこのノードの右側に付いているエッジ */
-	Prev      *Node   /* ラティス上で最も良いスコアを持つ左側のノード */
-	BestScore float64 /* */
+
+	Prev      *Node /* ラティス上で最も良いスコアを持つ左側のノード */
+	BestScore float64
+
+	Next      *Node
+	GoalScore float64
+
+	// for priority queue
+	PathTotalScore float64
+	index          int
 }
 
 func NewNode() Node {
